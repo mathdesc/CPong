@@ -41,6 +41,8 @@ Paddle ai;
 AIAttrs aiattrs;
 Ball ball[NB_BALLS];
 bool game_paused = false;
+bool ai_lost = false;
+unsigned int game_start;
 
 float calc_speed(float current_speed, int direction)
 {
@@ -97,7 +99,13 @@ void calc_ball_collision(Ball *ball)
     {
         ball->direction_y = -ball->direction_y;
     }
-    
+    if(ball->rect.x >= SCREEN_WIDTH) {
+        player.score++;
+        if (player.score == 10) {
+			ai_lost = true;
+			game_paused = true;
+		}
+	}
     calc_ball_paddle_collision(&ai, ball);
    // calc_ball_paddle_collision(&player);
 }
@@ -206,6 +214,7 @@ void draw_circle(SDL_Renderer*r, int cx, int cy, int radius, SDL_Color color)
 
 void render()
 {
+	unsigned int lost_time;
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     
@@ -253,6 +262,13 @@ void render()
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         SDL_RenderFillRect(renderer, &grayout);
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+        if (ai_lost && player.score > 0)  { 
+			lost_time = SDL_GetTicks();
+			printf ("AI lost game in %d ticks\n", lost_time - game_start);
+			// Ok pretend it's a new game (but with same rand seed yet;)
+			player.score = 0;
+			game_start = lost_time; 
+		}
     }
     
     SDL_RenderPresent(renderer);
@@ -263,7 +279,8 @@ void game_loop()
     bool running = true;
     unsigned int last_time = 0;
     unsigned int accumulator = 0;
-    unsigned int current_time;
+    unsigned int current_time = game_start = SDL_GetTicks();
+    printf ("Game starts at %d\n", current_time);
     
     while(running) {
         running = handle_input();
@@ -327,4 +344,5 @@ int main(int argc, const char * argv[])
     
     init_game();
     game_loop();
+    
 }
