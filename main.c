@@ -97,7 +97,7 @@ void calc_ball_collision(Ball *ball)
         ball->direction_y = -ball->direction_y;
     }
     
-   // calc_ball_paddle_collision(&ai);
+    calc_ball_paddle_collision(&ai, ball);
    // calc_ball_paddle_collision(&player);
 }
 
@@ -172,8 +172,8 @@ void update()
     /* Game logic */
     for(int i = 0; i < NB_BALLS; i++) {
 		ai.direction = ai_decision(&ball[i]);
+		calc_paddle_movement(&ai);
 	}
-    calc_paddle_movement(&ai);
     calc_paddle_movement(&player);
     
     for(int i = 0; i < NB_BALLS; i++) {
