@@ -10,7 +10,7 @@
 #define helper_funcs_h
 
 #include <stdio.h>
-#include <SDL2/sdl.h>
+#include <SDL2/SDL.h>
 
 float f_clamp(float value, float min, float max);
 int i_clamp(int value, int min, int max);
