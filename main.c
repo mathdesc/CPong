@@ -111,7 +111,7 @@ void calc_ball_movement()
     if(ball.start) {
         ball.direction_x = 1;
         ball.direction_y = 1;
-        ball.rect.x = player.rect.x + player.rect.w;
+        ball.rect.x = player.rect.x + player.rect.w + (ball.rect.w - 1);
         ball.rect.y = player.rect.y + (player.rect.h / 2) - (ball.rect.h / 2);
         return;
     }
