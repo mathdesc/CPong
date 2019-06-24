@@ -298,6 +298,7 @@ void init_game()
     ai.rect.h = PADDLE_H;
     set_rect_center(&ai.rect, SCREEN_HALF + PADDLE_GAP, (SCREEN_HEIGHT / 2));
     
+    srand(SDL_GetTicks());
     for(int i = 0; i < NB_BALLS; i++) {
 		ball[i].rect.h = BALL_SIZE;
 		ball[i].rect.w = BALL_SIZE;
