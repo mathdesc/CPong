@@ -33,6 +33,7 @@ typedef struct _ball {
     float direction_x;
     float direction_y;
     bool start;
+    SDL_Color color;
 } Ball;
 
 Paddle player;
@@ -215,8 +216,7 @@ void render()
     // We want a real ball (circle)
     //SDL_RenderFillRect(renderer, &ball.rect);
     for(int i = 0; i < NB_BALLS; i++) {
-		SDL_Color ball_color = {255, 255, 255};
-		draw_circle(renderer, ball[i].rect.x, ball[i].rect.y, BALL_SIZE, ball_color);
+		draw_circle(renderer, ball[i].rect.x, ball[i].rect.y, BALL_SIZE, ball[i].color);
 	}
 	
     /* draw scores */
@@ -289,6 +289,7 @@ void game_loop()
 
 void init_game()
 {
+	SDL_Color ball_color ;
     player.rect.w = PADDLE_W;
     player.rect.h = PADDLE_H;
     set_rect_center(&player.rect, SCREEN_HALF - PADDLE_GAP, (SCREEN_HEIGHT / 2));
@@ -305,7 +306,11 @@ void init_game()
 		ball[i].direction_y = 1;
         ball[i].rect.x =  rand() % SCREEN_WIDTH;
         ball[i].rect.y =  rand() % SCREEN_HEIGHT;
-        printf ("Init ball[%d] %d,%d\n", i , ball[i].rect.x, ball[i].rect.y);
+        ball_color.r = rand() % 255;
+        ball_color.g = rand() % 255;
+        ball_color.b = rand() % 255;
+        ball[i].color = ball_color;
+        printf ("Init ball[%d] %d,%d color (%d,%d,%d)\n", i , ball[i].rect.x, ball[i].rect.y, ball[i].color.r, ball[i].color.g, ball[i].color.b);
 	}
     
     aiattrs.frame_count = 0;
