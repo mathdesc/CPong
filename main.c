@@ -188,6 +188,27 @@ void update()
     calc_ball_movement();
 }
 
+/* 
+ * Thx Ryozuki
+ * https://stackoverflow.com/questions/28346989/drawing-and-filling-a-circle 
+ * */
+void draw_circle(SDL_Renderer*r, int cx, int cy, int radius, SDL_Color color)
+{
+    SDL_SetRenderDrawColor(r, color.r, color.g, color.b, color.a);
+    for (int w = 0; w < radius * 2; w++)
+    {
+        for (int h = 0; h < radius * 2; h++)
+        {
+            int dx = radius - w; // horizontal offset
+            int dy = radius - h; // vertical offset
+            if ((dx*dx + dy*dy) <= (radius * radius))
+            {
+                SDL_RenderDrawPoint(r, cx + dx, cy + dy);
+            }
+        }
+    }
+}
+
 void render()
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -196,7 +217,11 @@ void render()
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
     SDL_RenderFillRect(renderer, &player.rect);
     SDL_RenderFillRect(renderer, &ai.rect);
-    SDL_RenderFillRect(renderer, &ball.rect);
+    
+    // We want a real ball (circle)
+    //SDL_RenderFillRect(renderer, &ball.rect);
+    SDL_Color ball_color = {255, 255, 255};
+    draw_circle(renderer, ball.rect.x, ball.rect.y, BALL_SIZE, ball_color);
     
     /* draw scores */
     SDL_Rect rect;
