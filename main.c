@@ -38,7 +38,7 @@ typedef struct _ball {
 Paddle player;
 Paddle ai;
 AIAttrs aiattrs;
-Ball ball;
+Ball ball[NB_BALLS];
 bool game_paused = false;
 
 float calc_speed(float current_speed, int direction)
@@ -61,7 +61,7 @@ float away_from_paddle(Paddle *paddle)
         return 1;
 }
 
-void calc_ball_paddle_collision(Paddle *paddle)
+void calc_ball_paddle_collision(Paddle *paddle, Ball ball)
 {
     bool bounce = false;
     float percent = remap(ball.rect.y + (ball.rect.h / 2),
@@ -71,7 +71,7 @@ void calc_ball_paddle_collision(Paddle *paddle)
 
     while(SDL_HasIntersection(&ball.rect, &paddle->rect)) {
         bounce = true;
-        
+   
         ball.rect.x += away_from_paddle(paddle);
     }
     if(bounce) {
@@ -86,7 +86,7 @@ void calc_ball_paddle_collision(Paddle *paddle)
     }
 }
 
-void calc_ball_collision()
+void calc_ball_collision(Ball ball)
 {
     if(ball.rect.x + ball.rect.w <= 0 || ball.rect.x >= SCREEN_WIDTH) {
         ball.direction_x = -ball.direction_x;
@@ -101,21 +101,13 @@ void calc_ball_collision()
    // calc_ball_paddle_collision(&player);
 }
 
-void calc_ball_movement()
+void calc_ball_movement(Ball ball)
 {
-    if(ball.start) {
-        ball.direction_x = 1;
-        ball.direction_y = 1;
-        ball.rect.x = player.rect.x + player.rect.w + (ball.rect.w - 1);
-        ball.rect.y = player.rect.y + (player.rect.h / 2) - (ball.rect.h / 2);
-        return;
-    }
-
     ball.rect.x += (BALL_SPEED * ball.direction_x);
     ball.rect.y += (BALL_SPEED * ball.direction_y);
 }
 
-void ai_predict_ball()
+void ai_predict_ball(Ball ball)
 {
     if(aiattrs.frame_count > AI_PREDICT_STEP) {
         aiattrs.frame_count = 0;
@@ -126,12 +118,12 @@ void ai_predict_ball()
     aiattrs.frame_count++;
 }
 
-int ai_decision()
+int ai_decision(Ball ball)
 {
     SDL_Point ball_center = get_rect_center(&ball.rect);
     
     if(ball_center.x >= AI_MIN_REACT && ball_center.x <= AI_MAX_REACT && ball.direction_x > 0) {
-        ai_predict_ball();
+        ai_predict_ball(ball);
         if(aiattrs.prediction.y <= ai.rect.y + AI_PADDLE_UPPER_BOUND)
             return -1;
         else if(aiattrs.prediction.y >= ai.rect.y + AI_PADDLE_LOWER_BOUND)
@@ -154,8 +146,11 @@ bool handle_input()
                 player.direction = -1;
             else if(event.key.keysym.sym == SDLK_DOWN)
                 player.direction = 1;
-            else if(event.key.keysym.sym == SDLK_SPACE)
-                ball.start = false;
+            else if(event.key.keysym.sym == SDLK_SPACE) {
+				for(int i = 0; i < NB_BALLS; i++) {
+					ball[i].start = false;
+				}
+			}
             else if(event.key.keysym.sym == SDLK_ESCAPE)
                 return false;
             else if(event.key.keysym.sym == SDLK_p)
@@ -175,12 +170,16 @@ void update()
         return;
     
     /* Game logic */
-    ai.direction = ai_decision();
+    for(int i = 0; i < NB_BALLS; i++) {
+		ai.direction = ai_decision(ball[i]);
+	}
     calc_paddle_movement(&ai);
     calc_paddle_movement(&player);
     
-    calc_ball_collision();
-    calc_ball_movement();
+    for(int i = 0; i < NB_BALLS; i++) {
+		calc_ball_collision(ball[i]);
+		calc_ball_movement(ball[i]);
+	}
 }
 
 /* 
@@ -215,9 +214,11 @@ void render()
     
     // We want a real ball (circle)
     //SDL_RenderFillRect(renderer, &ball.rect);
-    SDL_Color ball_color = {255, 255, 255};
-    draw_circle(renderer, ball.rect.x, ball.rect.y, BALL_SIZE, ball_color);
-    
+    for(int i = 0; i < NB_BALLS; i++) {
+		SDL_Color ball_color = {255, 255, 255};
+		draw_circle(renderer, ball[i].rect.x, ball[i].rect.y, BALL_SIZE, ball_color);
+	}
+	
     /* draw scores */
     SDL_Rect rect;
     rect.w = SCORE_W;
@@ -296,11 +297,16 @@ void init_game()
     ai.rect.h = PADDLE_H;
     set_rect_center(&ai.rect, SCREEN_HALF + PADDLE_GAP, (SCREEN_HEIGHT / 2));
     
-    ball.rect.h = BALL_SIZE;
-    ball.rect.w = BALL_SIZE;
-    ball.start = true;
-    ball.direction_x = 1;
-    ball.direction_y = 1;
+    for(int i = 0; i < NB_BALLS; i++) {
+		ball[i].rect.h = BALL_SIZE;
+		ball[i].rect.w = BALL_SIZE;
+		ball[i].start = true;
+		ball[i].direction_x = 1;
+		ball[i].direction_y = 1;
+        ball[i].rect.x =  rand() % SCREEN_WIDTH;
+        ball[i].rect.y =  rand() % SCREEN_HEIGHT;
+        printf ("Init ball[%d] %d,%d\n", i , ball[i].rect.x, ball[i].rect.y);
+	}
     
     aiattrs.frame_count = 0;
 }

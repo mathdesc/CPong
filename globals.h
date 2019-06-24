@@ -22,6 +22,7 @@
 #define PADDLE_H 120
 #define PADDLE_GAP 320
 #define BALL_SIZE 20
+#define NB_BALLS 8
 
 #define PADDLE_ACCEL 0.1
 #define PADDLE_DECEL 0.01
