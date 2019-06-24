@@ -61,68 +61,68 @@ float away_from_paddle(Paddle *paddle)
         return 1;
 }
 
-void calc_ball_paddle_collision(Paddle *paddle, Ball ball)
+void calc_ball_paddle_collision(Paddle *paddle, Ball *ball)
 {
     bool bounce = false;
-    float percent = remap(ball.rect.y + (ball.rect.h / 2),
+    float percent = remap(ball->rect.y + (ball->rect.h / 2),
                     paddle->rect.y,
                     paddle->rect.y + paddle->rect.h,
                     -1.0, 1.0);
 
-    while(SDL_HasIntersection(&ball.rect, &paddle->rect)) {
+    while(SDL_HasIntersection(&ball->rect, &paddle->rect)) {
         bounce = true;
    
-        ball.rect.x += away_from_paddle(paddle);
+        ball->rect.x += away_from_paddle(paddle);
     }
     if(bounce) {
         if(fabsf(percent) > 1.0) {
-            ball.direction_x = -ball.direction_x;
-            ball.direction_y = -ball.direction_y;
+            ball->direction_x = -ball->direction_x;
+            ball->direction_y = -ball->direction_y;
         }
         else {
-            ball.direction_x = -ball.direction_x;
-            ball.direction_y = -percent + (paddle->speed * paddle->direction * SMACK_FORCE_MULT);
+            ball->direction_x = -ball->direction_x;
+            ball->direction_y = -percent + (paddle->speed * paddle->direction * SMACK_FORCE_MULT);
         }
     }
 }
 
-void calc_ball_collision(Ball ball)
+void calc_ball_collision(Ball *ball)
 {
-    if(ball.rect.x + ball.rect.w <= 0 || ball.rect.x >= SCREEN_WIDTH) {
-        ball.direction_x = -ball.direction_x;
+    if(ball->rect.x + ball->rect.w <= 0 || ball->rect.x >= SCREEN_WIDTH) {
+        ball->direction_x = -ball->direction_x;
     }
-    else if(ball.rect.y <= 0 || 
-			ball.rect.y + ball.rect.h >= SCREEN_HEIGHT)
+    else if(ball->rect.y <= 0 || 
+			ball->rect.y + ball->rect.h >= SCREEN_HEIGHT)
     {
-        ball.direction_y = -ball.direction_y;
+        ball->direction_y = -ball->direction_y;
     }
     
    // calc_ball_paddle_collision(&ai);
    // calc_ball_paddle_collision(&player);
 }
 
-void calc_ball_movement(Ball ball)
+void calc_ball_movement(Ball *ball)
 {
-    ball.rect.x += (BALL_SPEED * ball.direction_x);
-    ball.rect.y += (BALL_SPEED * ball.direction_y);
+    ball->rect.x += (BALL_SPEED * ball->direction_x);
+    ball->rect.y += (BALL_SPEED * ball->direction_y);
 }
 
-void ai_predict_ball(Ball ball)
+void ai_predict_ball(Ball *ball)
 {
     if(aiattrs.frame_count > AI_PREDICT_STEP) {
         aiattrs.frame_count = 0;
         
         aiattrs.prediction.x = ai.rect.x;
-        aiattrs.prediction.y = ball.rect.y;
+        aiattrs.prediction.y = ball->rect.y;
     }
     aiattrs.frame_count++;
 }
 
-int ai_decision(Ball ball)
+int ai_decision(Ball *ball)
 {
-    SDL_Point ball_center = get_rect_center(&ball.rect);
+    SDL_Point ball_center = get_rect_center(&ball->rect);
     
-    if(ball_center.x >= AI_MIN_REACT && ball_center.x <= AI_MAX_REACT && ball.direction_x > 0) {
+    if(ball_center.x >= AI_MIN_REACT && ball_center.x <= AI_MAX_REACT && ball->direction_x > 0) {
         ai_predict_ball(ball);
         if(aiattrs.prediction.y <= ai.rect.y + AI_PADDLE_UPPER_BOUND)
             return -1;
@@ -171,14 +171,14 @@ void update()
     
     /* Game logic */
     for(int i = 0; i < NB_BALLS; i++) {
-		ai.direction = ai_decision(ball[i]);
+		ai.direction = ai_decision(&ball[i]);
 	}
     calc_paddle_movement(&ai);
     calc_paddle_movement(&player);
     
     for(int i = 0; i < NB_BALLS; i++) {
-		calc_ball_collision(ball[i]);
-		calc_ball_movement(ball[i]);
+		calc_ball_collision(&ball[i]);
+		calc_ball_movement(&ball[i]);
 	}
 }
 
