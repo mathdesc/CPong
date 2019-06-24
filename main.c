@@ -88,16 +88,11 @@ void calc_ball_paddle_collision(Paddle *paddle)
 
 void calc_ball_collision()
 {
-    if(ball.rect.x + ball.rect.w <= 0) {
-        ball.start = true;
-        ai.score++;
+    if(ball.rect.x + ball.rect.w <= 0 || ball.rect.x >= SCREEN_WIDTH) {
+        ball.direction_x = -ball.direction_x;
     }
-    else if(ball.rect.x >= SCREEN_WIDTH) {
-        ball.start = true;
-        player.score++;
-    }
-    else if(ball.rect.y <= 0
-            || ball.rect.y + ball.rect.h >= SCREEN_HEIGHT)
+    else if(ball.rect.y <= 0 || 
+			ball.rect.y + ball.rect.h >= SCREEN_HEIGHT)
     {
         ball.direction_y = -ball.direction_y;
     }
