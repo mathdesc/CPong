@@ -97,8 +97,8 @@ void calc_ball_collision()
         ball.direction_y = -ball.direction_y;
     }
     
-    calc_ball_paddle_collision(&ai);
-    calc_ball_paddle_collision(&player);
+   // calc_ball_paddle_collision(&ai);
+   // calc_ball_paddle_collision(&player);
 }
 
 void calc_ball_movement()
