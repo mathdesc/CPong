@@ -186,13 +186,16 @@ bool handle_input()
         }
         if(event.type == SDL_KEYDOWN) {
             if(event.key.keysym.sym == SDLK_UP)
-                player.direction = -1;
+                ball[0].direction_y--;
             else if(event.key.keysym.sym == SDLK_DOWN)
-                player.direction = 1;
+                ball[0].direction_y++;
+			else if(event.key.keysym.sym == SDLK_RIGHT)
+                ball[0].direction_x++;
+			else if(event.key.keysym.sym == SDLK_LEFT)
+                ball[0].direction_x--;
             else if(event.key.keysym.sym == SDLK_SPACE) {
-				for(int i = 0; i < NB_BALLS; i++) {
-					ball[i].start = false;
-				}
+				ball[0].direction_x = 0;
+                ball[0].direction_y = 0;
 			}
             else if(event.key.keysym.sym == SDLK_ESCAPE)
                 return false;
@@ -201,7 +204,8 @@ bool handle_input()
         }
         else if(event.type == SDL_KEYUP) {
             if(event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_DOWN)
-                player.direction = 0;
+                ball[0].direction_x--;
+                ball[0].direction_y--;
         }
     }
     return true;
@@ -213,11 +217,11 @@ void update()
         return;
     
     /* Game logic */
-    for(int i = 0; i < NB_BALLS; i++) {
+    /*for(int i = 0; i < NB_BALLS; i++) {
 		ai.direction = ai_decision(&ball[i]);
 		calc_paddle_movement(&ai);
 	}
-    calc_paddle_movement(&player);
+    calc_paddle_movement(&player);*/
     
     for(int i = 0; i < NB_BALLS; i++) {
 		calc_ball_intercollision(&ball[i]);
@@ -260,7 +264,7 @@ void render()
     // We want a real ball (circle)
     //SDL_RenderFillRect(renderer, &ball.rect);
     for(int i = 0; i < NB_BALLS; i++) {
-		draw_circle(renderer, ball[i].rect.x, ball[i].rect.y, BALL_SIZE, ball[i].color);
+		draw_circle(renderer, ball[i].rect.x, ball[i].rect.y, ball[i].rect.h, ball[i].color);
 	}
 	
     /* draw scores */
@@ -345,6 +349,7 @@ void game_loop()
 void init_game()
 {
 	SDL_Color ball_color ;
+	SDL_Color player_ball_color  = {255, 255, 255};
     player.rect.w = PADDLE_W;
     player.rect.h = PADDLE_H;
     //set_rect_center(&player.rect, SCREEN_HALF - PADDLE_GAP, (SCREEN_HEIGHT / 2));
@@ -354,9 +359,10 @@ void init_game()
     //set_rect_center(&ai.rect, SCREEN_HALF + PADDLE_GAP, (SCREEN_HEIGHT / 2));
     
     srand(SDL_GetTicks());
+    // The 0th ball is player
     for(int i = 0; i < NB_BALLS; i++) {
-		ball[i].rect.h = BALL_SIZE;
-		ball[i].rect.w = BALL_SIZE;
+		ball[i].rect.h = i == 0 ? BALL_SIZE : BALL_SIZE -2 ;
+		ball[i].rect.w = i == 0 ? BALL_SIZE : BALL_SIZE -2 ;
 		ball[i].start = true;
 		ball[i].direction_x = 1;
 		ball[i].direction_y = 1;
@@ -365,7 +371,7 @@ void init_game()
         ball_color.r = rand() % 255;
         ball_color.g = rand() % 255;
         ball_color.b = rand() % 255;
-        ball[i].color = ball_color;
+        ball[i].color = (i != 0 ? ball_color : player_ball_color);
         ball[i].speed = i_clamp (rand() % BALL_SPEED , 1, BALL_SPEED);
         printf ("Init ball[%d] %d,%d color (%d,%d,%d)\n", i , ball[i].rect.x, ball[i].rect.y, ball[i].color.r, ball[i].color.g, ball[i].color.b);
 	}
@@ -377,11 +383,17 @@ int main(int argc, const char * argv[])
 {
     SDL_Init(SDL_INIT_EVERYTHING);
     
-    window = SDL_CreateWindow("CPong", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("Adrien-Circles", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
     
     init_game();
     game_loop();
     
+    // Clean exit
+    SDL_DestroyRenderer(renderer);
+	SDL_DestroyWindow(window);
+	window = NULL;
+	renderer = NULL;
+	SDL_Quit();
 }
