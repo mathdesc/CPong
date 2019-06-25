@@ -22,12 +22,12 @@
 #define PADDLE_H 120
 #define PADDLE_GAP 320
 #define BALL_SIZE 20
-#define NB_BALLS 8
+#define NB_BALLS 18
 
 #define PADDLE_ACCEL 0.1
 #define PADDLE_DECEL 0.01
 #define PADDLE_SPEED 10
-#define BALL_SPEED 3
+#define BALL_SPEED 5
 #define SMACK_FORCE_MULT 3
 #define AI_PREDICT_STEP 12
 

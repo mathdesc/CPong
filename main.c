@@ -34,6 +34,7 @@ typedef struct _ball {
     float direction_y;
     bool start;
     SDL_Color color;
+    int speed;
 } Ball;
 
 Paddle player;
@@ -64,10 +65,18 @@ float away_from_paddle(Paddle *paddle)
         return 1;
 }
 
+float away_from_ball(Ball ball)
+{
+    if(ball.rect.x >= SCREEN_HALF)
+        return -1;
+    else
+        return 1;
+}
+
 void calc_ball_paddle_collision(Paddle *paddle, Ball *ball)
 {
     bool bounce = false;
-    float percent = remap(ball->rect.y + (ball->rect.h / 2),
+    float percent = remap(ball->rect.y + (ball->rect.h /2),
                     paddle->rect.y,
                     paddle->rect.y + paddle->rect.h,
                     -1.0, 1.0);
@@ -91,14 +100,16 @@ void calc_ball_paddle_collision(Paddle *paddle, Ball *ball)
 
 void calc_ball_collision(Ball *ball)
 {
-    if(ball->rect.x + ball->rect.w <= 0 || ball->rect.x >= SCREEN_WIDTH) {
+	bool bounce = false;
+    if(ball->rect.x - (ball->rect.w  / 2) <= 0 || ball->rect.x + (ball->rect.w  / 2) >= SCREEN_WIDTH  ) {
         ball->direction_x = -ball->direction_x;
     }
-    else if(ball->rect.y <= 0 || 
+    if(ball->rect.y - ball->rect.h <= 0 || 
 			ball->rect.y + ball->rect.h >= SCREEN_HEIGHT)
     {
         ball->direction_y = -ball->direction_y;
     }
+#ifdef CONG_EMPIRICAL  
     if(ball->rect.x >= SCREEN_WIDTH) {
         player.score++;
         if (player.score == 10) {
@@ -106,14 +117,37 @@ void calc_ball_collision(Ball *ball)
 			game_paused = true;
 		}
 	}
-    calc_ball_paddle_collision(&ai, ball);
-   // calc_ball_paddle_collision(&player);
+#endif
+	
+  //calc_ball_paddle_collision(&ai, ball);
+   //calc_ball_paddle_collision(&player,ball);
+}
+
+void calc_ball_intercollision() {
+   bool bounce = false;
+   // Balls between balls collision
+   for(int i = 0; i < NB_BALLS; i++) {
+	   for(int j = 0; j < NB_BALLS; j++) {
+			if (&ball[j] == &ball[i]) continue;
+			while (SDL_HasIntersection(&(ball[j].rect), &(ball[i].rect))) {
+				bounce = true;
+				ball[j].rect.x += away_from_ball(ball[i]);
+			}
+			if (bounce) {
+				ball[j].direction_x = -ball[j].direction_x;
+				ball[j].direction_y = -ball[j].direction_y;
+				ball[i].direction_x = -ball[i].direction_x;
+				ball[i].direction_y = -ball[i].direction_y;
+			}
+			bounce = false;
+		}
+	}
 }
 
 void calc_ball_movement(Ball *ball)
 {
-    ball->rect.x += (BALL_SPEED * ball->direction_x);
-    ball->rect.y += (BALL_SPEED * ball->direction_y);
+    ball->rect.x += (ball->speed * ball->direction_x);
+    ball->rect.y += (ball->speed * ball->direction_y);
 }
 
 void ai_predict_ball(Ball *ball)
@@ -186,8 +220,9 @@ void update()
     calc_paddle_movement(&player);
     
     for(int i = 0; i < NB_BALLS; i++) {
-		calc_ball_collision(&ball[i]);
+		calc_ball_intercollision(&ball[i]);
 		calc_ball_movement(&ball[i]);
+		calc_ball_collision(&ball[i]);
 	}
 }
 
@@ -219,8 +254,8 @@ void render()
     SDL_RenderClear(renderer);
     
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &player.rect);
-    SDL_RenderFillRect(renderer, &ai.rect);
+   // SDL_RenderFillRect(renderer, &player.rect);
+   // SDL_RenderFillRect(renderer, &ai.rect);
     
     // We want a real ball (circle)
     //SDL_RenderFillRect(renderer, &ball.rect);
@@ -262,13 +297,16 @@ void render()
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
         SDL_RenderFillRect(renderer, &grayout);
         SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+#ifdef CONG_EMPIRICAL         
         if (ai_lost && player.score > 0)  { 
 			lost_time = SDL_GetTicks();
 			printf ("AI lost game in %d ticks\n", lost_time - game_start);
-			// Ok pretend it's a new game (but with same rand seed yet;)
+			// Ok let's pretend it's a new game (but with same rand seed yet;)
 			player.score = 0;
 			game_start = lost_time; 
 		}
+#endif
     }
     
     SDL_RenderPresent(renderer);
@@ -309,11 +347,11 @@ void init_game()
 	SDL_Color ball_color ;
     player.rect.w = PADDLE_W;
     player.rect.h = PADDLE_H;
-    set_rect_center(&player.rect, SCREEN_HALF - PADDLE_GAP, (SCREEN_HEIGHT / 2));
+    //set_rect_center(&player.rect, SCREEN_HALF - PADDLE_GAP, (SCREEN_HEIGHT / 2));
     
     ai.rect.w = PADDLE_W;
     ai.rect.h = PADDLE_H;
-    set_rect_center(&ai.rect, SCREEN_HALF + PADDLE_GAP, (SCREEN_HEIGHT / 2));
+    //set_rect_center(&ai.rect, SCREEN_HALF + PADDLE_GAP, (SCREEN_HEIGHT / 2));
     
     srand(SDL_GetTicks());
     for(int i = 0; i < NB_BALLS; i++) {
@@ -322,12 +360,13 @@ void init_game()
 		ball[i].start = true;
 		ball[i].direction_x = 1;
 		ball[i].direction_y = 1;
-        ball[i].rect.x =  rand() % SCREEN_WIDTH;
-        ball[i].rect.y =  rand() % SCREEN_HEIGHT;
+        ball[i].rect.x =  i_clamp (rand() % SCREEN_WIDTH, ball[i].rect.w, SCREEN_WIDTH - ball[i].rect.w);
+        ball[i].rect.y =  i_clamp (rand() % SCREEN_HEIGHT,  ball[i].rect.h ,SCREEN_HEIGHT - ball[i].rect.h);
         ball_color.r = rand() % 255;
         ball_color.g = rand() % 255;
         ball_color.b = rand() % 255;
         ball[i].color = ball_color;
+        ball[i].speed = i_clamp (rand() % BALL_SPEED , 1, BALL_SPEED);
         printf ("Init ball[%d] %d,%d color (%d,%d,%d)\n", i , ball[i].rect.x, ball[i].rect.y, ball[i].color.r, ball[i].color.g, ball[i].color.b);
 	}
     
